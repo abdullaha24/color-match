@@ -1,0 +1,43 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Project {
+  id          String      @id @default(cuid())
+  name        String      @default("Untitled Project")
+  targetR     Int         // 0-255
+  targetG     Int         // 0-255
+  targetB     Int         // 0-255
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  pigments    Pigment[]
+  iterations  Iteration[]
+}
+
+model Pigment {
+  id          String   @id @default(cuid())
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name        String
+  quantity    Float    // grams / units
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Iteration {
+  id             String   @id @default(cuid())
+  projectId      String
+  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  iterationNum   Int      // 1, 2, 3...
+  pigmentAdded   String   // Name of pigment added in this step
+  quantityAdded  Float    // How much was added
+  resultR        Int      // Measured RGB after mixing
+  resultG        Int
+  resultB        Int
+  createdAt      DateTime @default(now())
+}

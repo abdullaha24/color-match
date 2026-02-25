@@ -1,0 +1,115 @@
+<role>
+You are an elite senior fullstack nextjs developer
+</role>
+
+<goal>
+You will plan and create a robust implementation plan for my required "color-match" nextjs app. Use
+the algorithm I provide, understand my goals, and share the implementation plan of an enterprise-grade, robust,
+visually pleasing and intuitive nextjs app. The plan should be such robust and thorough that a dumber LLM
+like gemini flash can implement it perfectly. YOu will do the heavy lifting with the brains, ensuring no bugs 
+and corner cases are handled.
+</goal>
+
+<techstack>
+- nextjs
+- tailwind css
+- some database to store the final colors / projects / iterations
+</techstack>
+
+<application>
+Color Match. The app does the following:
+- Allows the user to create 'projects'.
+- Each project is simply trying to match a target color by physically mixing pigments.
+- In a new project, the user will define the target color using its RGB values.
+- You will use the RGB values and the algorithm provided below to convert it into l* a* b* values.
+- Then below the target the user will enter his list of pigments and respective quantities he is using to recreate the color physically.
+- The pigments entry should show 4 rows by default, and the user can add by simply clicking press.
+- Pigment name, quantity, and percentage (automatically calculate this. divide pigment qty by the total qty of pigments)
+- at the bottom of the pigment rows show the total quantity and the total percentage (should sum to 100%. if not flash an error).
+- once the starting pigments are listed, below it there is a table for "iterations".
+- the iteration table contains these columns: N, Pigment Added (user defined), RGB(user defined), L* a* b* (you calculate based on RGB and algorithm below), (Delta L* - Delta a* - Delta b*) calculate based on algo below , Delta E (you calculate based on algorithm).
+- for the pigment added column, show a dropdown of the pigments the user already added. clicking on one prompts to enter the quantity. add this quantity to the pigment mix for the respective pigment selected.
+- the pigment added column also allows to add a new pigment. user can type it in and input the quantity. once done make sure this pigment and quantity gets added to the pigment mix. calculate the percentages accurately, make sure you cater for the new pigment added.
+- show 5 iteration rows first with the option to plus and add. 
+- when the delta E value is less than or equal to 2, highlight it green.
+- show the user the option to "save the project" and give a name to the project at the top.
+- make sure all projects, pigment mixes, iterations are saved. use the simplest database you can. make sure its robust and wont get corrupted. 
+</application>
+
+<algorithm>
+Color Conversion and Delta E Algorithm
+
+Part 1: RGB to CIEXYZ
+Given an RGB input where R, G, B are between 0 and 255.
+
+1. Normalize the RGB values:
+R_srgb = R / 255
+G_srgb = G / 255
+B_srgb = B / 255
+
+2. Apply Inverse Gamma Correction to linearize each channel
+(Let C represent R_srgb, G_srgb, and B_srgb):
+
+If C <= 0.04045:
+    C_lin = C / 12.92
+If C > 0.04045:
+    C_lin = ((C + 0.055) / 1.055) ^ 2.4
+
+3. Convert Linear RGB to XYZ (using D65 Standard Illuminant):
+X = (R_lin * 0.4124564 + G_lin * 0.3575761 + B_lin * 0.1804375) * 100
+Y = (R_lin * 0.2126729 + G_lin * 0.7151522 + B_lin * 0.0721750) * 100
+Z = (R_lin * 0.0193339 + G_lin * 0.1191920 + B_lin * 0.9503041) * 100
+
+---------------------------------------------------------
+
+Part 2: CIEXYZ to CIELAB (L*a*b*)
+Given standard D65 Reference White values: 
+X_n = 95.047
+Y_n = 100.000
+Z_n = 108.883
+
+1. Normalize XYZ against Reference White:
+x_r = X / X_n
+y_r = Y / Y_n
+z_r = Z / Z_n
+
+2. Apply Transformation Function f(t) to x_r, y_r, z_r:
+(Note: apply this logic individually to x_r, y_r, and z_r)
+
+If t > 0.008856:
+    f(t) = t ^ (1/3)
+If t <= 0.008856:
+    f(t) = (7.787 * t) + (16 / 116)
+
+3. Calculate Final L, a, b:
+L = (116 * f(y_r)) - 16
+a = 500 * (f(x_r) - f(y_r))
+b = 200 * (f(y_r) - f(z_r))
+
+---------------------------------------------------------
+
+Part 3: Delta E Calculation
+To find the distance between your Target Color (L_t, a_t, b_t) 
+and Current Batch (L_c, a_c, b_c):
+
+1. Calculate the difference on each axis:
+dL = L_t - L_c
+da = a_t - a_c
+db = b_t - b_c
+
+2. Calculate Total Color Difference (dE):
+dE = sqrt( (dL)^2 + (da)^2 + (db)^2 )
+</algorithm>
+
+<design>
+- modern, clean and robust enterprise grade UI and UX.
+- Intuitive and non-cluttered
+- ensure it renders properly for both desktop and mobile. use your best judgement to ensure optimal UI and UX for both desktop and mobile.
+- no misaligned elements, no clutter, ensure it looks polished and ready to go.
+- show a small square of color right next to where the target is defined and next to each iteration. base on the RGB.
+</design>
+
+<output>
+A well made, robust, thorough implemention plan for this application, covering the fullstacka nd ensuring the algorithm is properly implemented.
+Should be so thorogh and easy to follow that a highschool kid or dumb llm like gemini flash can implement it correctly without a hitch.
+</output>
