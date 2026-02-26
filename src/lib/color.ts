@@ -67,6 +67,57 @@ export function rgbToLab(rgb: RGB): Lab {
   return xyzToLab(rgbToXyz(rgb));
 }
 
+// ── Part 4: L*a*b* → XYZ ─────────────────────────────────────
+function inverseLabTransform(t: number): number {
+  const t3 = t * t * t;
+  return t3 > 0.008856 ? t3 : (t - 16 / 116) / 7.787;
+}
+
+export function labToXyz(lab: Lab): XYZ {
+  const y = (lab.L + 16) / 116;
+  const x = lab.a / 500 + y;
+  const z = y - lab.b / 200;
+
+  return {
+    x: inverseLabTransform(x) * REF_X,
+    y: inverseLabTransform(y) * REF_Y,
+    z: inverseLabTransform(z) * REF_Z,
+  };
+}
+
+// ── Part 5: XYZ → RGB ────────────────────────────────────────
+function gammaCorrect(c: number): number {
+  return c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+}
+
+function clamp(value: number): number {
+  const v = Math.round(value * 255);
+  if (v < 0) return 0;
+  if (v > 255) return 255;
+  return v;
+}
+
+export function xyzToRgb(xyz: XYZ): RGB {
+  const xN = xyz.x / 100;
+  const yN = xyz.y / 100;
+  const zN = xyz.z / 100;
+
+  const rLin = xN * 3.2404542 + yN * -1.5371385 + zN * -0.4985314;
+  const gLin = xN * -0.969266 + yN * 1.8760108 + zN * 0.041556;
+  const bLin = xN * 0.0556434 + yN * -0.2040259 + zN * 1.0572252;
+
+  return {
+    r: clamp(gammaCorrect(rLin)),
+    g: clamp(gammaCorrect(gLin)),
+    b: clamp(gammaCorrect(bLin)),
+  };
+}
+
+// ── Convenience: L*a*b* → RGB ─────────────────────────────────
+export function labToRgb(lab: Lab): RGB {
+  return xyzToRgb(labToXyz(lab));
+}
+
 // ── Part 3: Delta E (CIEDE2000) ──────────────────────────────
 export function deltaE(target: Lab, current: Lab): DeltaComponents {
   // Raw L*a*b* deltas (kept for the UI — signed directional differences)

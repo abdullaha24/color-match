@@ -24,11 +24,11 @@ export function IterationTable({ project, onUpdate }: IterationTableProps) {
   const [newG, setNewG] = useState("");
   const [newB, setNewB] = useState("");
 
-  const targetLab = rgbToLab({
-    r: project.targetR,
-    g: project.targetG,
-    b: project.targetB,
-  });
+  const targetLab = {
+    L: project.targetL,
+    a: project.targetA,
+    b: project.targetB_lab,
+  };
 
   const handleAddIteration = async () => {
     if (!newPigment || !newQty || !newR || !newG || !newB) {

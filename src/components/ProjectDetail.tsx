@@ -32,6 +32,9 @@ export interface FullProject {
   targetR: number;
   targetG: number;
   targetB: number;
+  targetL: number;
+  targetA: number;
+  targetB_lab: number;
   pigments: Pigment[];
   iterations: Iteration[];
 }
