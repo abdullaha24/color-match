@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { rgbToLab, deltaE } from "../color";
+import { rgbToLab, labToRgb, deltaE } from "../color";
 
 describe("Color Math Algorithm", () => {
   it("converts RGB(255, 0, 0) to expected L*a*b*", () => {
@@ -42,6 +42,55 @@ describe("Color Math Algorithm", () => {
     expect(lab.L).toBeCloseTo(53.59, 1);
     expect(lab.a).toBeCloseTo(0, 1);
     expect(lab.b).toBeCloseTo(0, 1);
+  });
+
+// ── LAB → RGB Round-trip Tests ──────────────────────────────
+
+  it("converts L*a*b* back to RGB for pure red", () => {
+    const rgb = labToRgb({ L: 53.24, a: 80.09, b: 67.2 });
+    expect(rgb.r).toBeCloseTo(255, 0);
+    expect(rgb.g).toBeCloseTo(0, 0);
+    expect(rgb.b).toBeCloseTo(0, 0);
+  });
+
+  it("converts L*a*b* back to RGB for pure green", () => {
+    const rgb = labToRgb({ L: 87.73, a: -86.18, b: 83.18 });
+    expect(rgb.r).toBeCloseTo(0, 0);
+    expect(rgb.g).toBeCloseTo(255, 0);
+    expect(rgb.b).toBeCloseTo(0, 0);
+  });
+
+  it("converts L*a*b* back to RGB for white", () => {
+    const rgb = labToRgb({ L: 100, a: 0, b: 0 });
+    expect(rgb.r).toBeCloseTo(255, 0);
+    expect(rgb.g).toBeCloseTo(255, 0);
+    expect(rgb.b).toBeCloseTo(255, 0);
+  });
+
+  it("converts L*a*b* back to RGB for black", () => {
+    const rgb = labToRgb({ L: 0, a: 0, b: 0 });
+    expect(rgb.r).toBe(0);
+    expect(rgb.g).toBe(0);
+    expect(rgb.b).toBe(0);
+  });
+
+  it("round-trips RGB → LAB → RGB for mid-gray", () => {
+    const original = { r: 128, g: 128, b: 128 };
+    const lab = rgbToLab(original);
+    const roundTripped = labToRgb(lab);
+    expect(roundTripped.r).toBeCloseTo(128, 0);
+    expect(roundTripped.g).toBeCloseTo(128, 0);
+    expect(roundTripped.b).toBeCloseTo(128, 0);
+  });
+
+  it("clamps out-of-gamut LAB values to valid 0-255 range", () => {
+    const rgb = labToRgb({ L: 100, a: 100, b: 100 });
+    expect(rgb.r).toBeGreaterThanOrEqual(0);
+    expect(rgb.r).toBeLessThanOrEqual(255);
+    expect(rgb.g).toBeGreaterThanOrEqual(0);
+    expect(rgb.g).toBeLessThanOrEqual(255);
+    expect(rgb.b).toBeGreaterThanOrEqual(0);
+    expect(rgb.b).toBeLessThanOrEqual(255);
   });
 
 // ── CIEDE2000 Delta E Tests ─────────────────────────────────

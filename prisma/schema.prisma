@@ -13,6 +13,9 @@ model Project {
   targetR     Int         // 0-255
   targetG     Int         // 0-255
   targetB     Int         // 0-255
+  targetL     Float       @default(0)   // L* (authoritative target)
+  targetA     Float       @default(0)   // a* (authoritative target)
+  targetB_lab Float       @default(0)   // b* (authoritative target — named targetB_lab to avoid collision with targetB)
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   pigments    Pigment[]

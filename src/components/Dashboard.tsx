@@ -7,6 +7,7 @@ import { Button } from "./ui/button";
 import { Modal } from "./ui/modal";
 import { Input } from "./ui/input";
 import { ColorSwatch } from "./ColorSwatch";
+import { labToRgb, rgbToLab } from "../lib/color";
 
 interface Project {
   id: string;
@@ -32,7 +33,34 @@ export function Dashboard() {
   const [r, setR] = useState("255");
   const [g, setG] = useState("255");
   const [b, setB] = useState("255");
+  const [modalInputMode, setModalInputMode] = useState<"rgb" | "lab">("rgb");
+  const [modalLabL, setModalLabL] = useState("");
+  const [modalLabA, setModalLabA] = useState("");
+  const [modalLabB, setModalLabB] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+
+  const handleModalModeSwitch = (mode: "rgb" | "lab") => {
+    if (mode === "lab" && modalInputMode === "rgb") {
+      const currentLab = rgbToLab({
+        r: Math.min(255, Math.max(0, parseInt(r) || 0)),
+        g: Math.min(255, Math.max(0, parseInt(g) || 0)),
+        b: Math.min(255, Math.max(0, parseInt(b) || 0)),
+      });
+      setModalLabL(currentLab.L.toFixed(2));
+      setModalLabA(currentLab.a.toFixed(2));
+      setModalLabB(currentLab.b.toFixed(2));
+    } else if (mode === "rgb" && modalInputMode === "lab") {
+      const currentRgb = labToRgb({
+        L: parseFloat(modalLabL) || 0,
+        a: parseFloat(modalLabA) || 0,
+        b: parseFloat(modalLabB) || 0,
+      });
+      setR(currentRgb.r.toString());
+      setG(currentRgb.g.toString());
+      setB(currentRgb.b.toString());
+    }
+    setModalInputMode(mode);
+  };
 
   const fetchProjects = async () => {
     setIsLoading(true);
@@ -57,19 +85,32 @@ export function Dashboard() {
     e.preventDefault();
     setIsCreating(true);
     try {
+      let bodyData: Record<string, unknown> = {
+        name: newName.trim() || "Untitled Project",
+      };
+
+      if (modalInputMode === "lab") {
+        bodyData.targetL = parseFloat(modalLabL) || 0;
+        bodyData.targetA = parseFloat(modalLabA) || 0;
+        bodyData.targetB_lab = parseFloat(modalLabB) || 0;
+      } else {
+        bodyData.targetR = parseInt(r, 10);
+        bodyData.targetG = parseInt(g, 10);
+        bodyData.targetB = parseInt(b, 10);
+      }
+
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newName.trim() || "Untitled Project",
-          targetR: parseInt(r, 10),
-          targetG: parseInt(g, 10),
-          targetB: parseInt(b, 10),
-        }),
+        body: JSON.stringify(bodyData),
       });
       if (res.ok) {
         const newProj = await res.json();
         setIsModalOpen(false);
+        setModalInputMode("rgb");
+        setModalLabL("");
+        setModalLabA("");
+        setModalLabB("");
         router.push(`/project/${newProj.id}`);
       }
     } catch (error) {
@@ -157,36 +198,91 @@ export function Dashboard() {
             autoFocus
           />
           <div className="space-y-3">
-            <label className="text-sm font-medium text-gray-700 block">Target Color (RGB)</label>
-            <div className="grid grid-cols-3 gap-4">
-              <Input
-                type="number"
-                min="0"
-                max="255"
-                placeholder="R"
-                value={r}
-                onChange={(e) => setR(e.target.value)}
-                required
-              />
-              <Input
-                type="number"
-                min="0"
-                max="255"
-                placeholder="G"
-                value={g}
-                onChange={(e) => setG(e.target.value)}
-                required
-              />
-              <Input
-                type="number"
-                min="0"
-                max="255"
-                placeholder="B"
-                value={b}
-                onChange={(e) => setB(e.target.value)}
-                required
-              />
+            <label className="text-sm font-medium text-gray-700 block">
+              Target Color
+            </label>
+            <div className="flex gap-1 p-1 bg-gray-100 rounded-lg w-fit">
+              <button
+                type="button"
+                onClick={() => handleModalModeSwitch("rgb")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  modalInputMode === "rgb"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                RGB
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModalModeSwitch("lab")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  modalInputMode === "lab"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                L*a*b*
+              </button>
             </div>
+            {modalInputMode === "rgb" ? (
+              <div className="grid grid-cols-3 gap-4">
+                <Input
+                  type="number"
+                  min="0"
+                  max="255"
+                  placeholder="R"
+                  value={r}
+                  onChange={(e) => setR(e.target.value)}
+                  required
+                />
+                <Input
+                  type="number"
+                  min="0"
+                  max="255"
+                  placeholder="G"
+                  value={g}
+                  onChange={(e) => setG(e.target.value)}
+                  required
+                />
+                <Input
+                  type="number"
+                  min="0"
+                  max="255"
+                  placeholder="B"
+                  value={b}
+                  onChange={(e) => setB(e.target.value)}
+                  required
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="L*"
+                  value={modalLabL}
+                  onChange={(e) => setModalLabL(e.target.value)}
+                  required
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="a*"
+                  value={modalLabA}
+                  onChange={(e) => setModalLabA(e.target.value)}
+                  required
+                />
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="b*"
+                  value={modalLabB}
+                  onChange={(e) => setModalLabB(e.target.value)}
+                  required
+                />
+              </div>
+            )}
           </div>
           <div className="pt-4 flex justify-end gap-3 border-t border-gray-100">
             <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
